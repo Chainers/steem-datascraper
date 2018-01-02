@@ -1,2 +1,3 @@
+PyYAML>=3.12
 steep-golos>=0.0.15
 steep-steem>=0.0.13
