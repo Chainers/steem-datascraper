@@ -14,13 +14,13 @@ class ConfigError(Exception):
     pass
 
 
-def remove_last_key(d, keys):
+def remove_last_key(d, *keys):
     if not keys:
         return
     if len(keys) == 1:
         d.pop(keys[0], None)
     else:
-        remove_last_key(d[keys[0]], keys[1:])
+        remove_last_key(d[keys[0]], *keys[1:])
 
 
 def get_or_raise(obj: dict, *keys, pop=False):
@@ -32,7 +32,7 @@ def get_or_raise(obj: dict, *keys, pop=False):
         if value == _INVALID_VALUE:
             raise ConfigError('Failed to get value on path "%s"' % '/'.join(keys[0:i]))
     if pop:
-        remove_last_key(obj, keys)
+        remove_last_key(obj, *keys)
     return value
 
 
@@ -96,9 +96,16 @@ class Config(object):
 
     def _parse_db_section(self):
         db = get_or_raise(self._cfg, 'db', pop=True)
-        mongo = get_or_raise(db, 'mongo')
+
+        host = get_or_raise(db, 'mongo', 'host')
+        port = get_or_raise(db, 'mongo', 'port')
+        db_name = get_or_raise(db, 'mongo', 'db_name')
+        schema = get_or_raise(db, 'mongo', 'schema')
+
         self.mongo = Object(
-            host=get_or_raise(mongo, 'host'),
-            port=get_or_raise(mongo, 'port'),
-            db_name=get_or_raise(mongo, 'db_name'),
+            host=host,
+            port=port,
+            db_name=db_name,
+            url='mongodb://%s:%s/%s' % (host, port, db_name),
+            schema=schema
         )
