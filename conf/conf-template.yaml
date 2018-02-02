@@ -7,11 +7,11 @@ datascraper:
 
   nodes:
     ws:
-      - wss://steemd2.steepshot.org
+      - wss://steemd.steepshot.org
       - wss://steemd-int.steemit.com
       - wss://steemd.steemit.com
     http:
-      - https://steemd2.steepshot.org
+      - https://steemd.steepshot.org
       - https://steemd-int.steemit.com
       - https://steemd.steemit.com
 db:

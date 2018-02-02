@@ -1,3 +1,4 @@
+pymongo>=3.6.0
 PyYAML>=3.12
-steep-golos>=0.0.15
-steep-steem>=0.0.13
+steep-golos>=0.0.16
+steep-steem>=0.0.14

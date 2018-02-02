@@ -7,32 +7,39 @@ from datascraper.utils import Object
 
 logger = logging.getLogger(__name__)
 
-_INVALID_VALUE = 0xDEADC0DE  # used in cases where None is valid
+
+class empty: pass  # used in cases where None value is valid
 
 
 class ConfigError(Exception):
     pass
 
 
-def remove_last_key(d, *keys):
+def remove_last_key(d: dict, *keys, remove_empty=False):
     if not keys:
         return
     if len(keys) == 1:
         d.pop(keys[0], None)
     else:
-        remove_last_key(d[keys[0]], *keys[1:])
+        remove_last_key(d[keys[0]], *keys[1:], remove_empty=remove_empty)
+        if not d[keys[0]] and remove_empty:
+            d.pop(keys[0], None)
 
 
-def get_or_raise(obj: dict, *keys, pop=False):
+def get_or_raise(obj: dict, *keys, pop=False, default=empty):
     if not obj or not isinstance(obj, dict):
         raise ConfigError('Failed to get value from empty or non-dict object.')
     value = obj.copy()
     for i, key in enumerate(keys, start=1):
-        value = value.get(key, _INVALID_VALUE)
-        if value == _INVALID_VALUE:
-            raise ConfigError('Failed to get value on path "%s"' % '/'.join(keys[0:i]))
+        value = value.get(key, empty)
+
+        item_path = '/'.join(keys[0:i])
+        if value is empty:
+            if default is not empty:
+                return default
+            raise ConfigError('Failed to get value on path "%s"' % item_path)
     if pop:
-        remove_last_key(obj, *keys)
+        remove_last_key(obj, *keys, remove_empty=True)
     return value
 
 
@@ -55,7 +62,7 @@ class Config(object):
             cls.__instance = cls(*args, **kwargs)
         return cls.__instance
 
-    def _load_conf(self, path):
+    def _load_conf(self, path: str):
         if not os.path.isfile(path) or not os.access(path, os.R_OK):
             raise ConfigError('Incorrect config file. Check path and access rights.')
         try:
@@ -78,34 +85,28 @@ class Config(object):
         logger.info('Logger config has been successfully loaded.')
 
     def _parse_datascraper_section(self):
-        datascraper = get_or_raise(self._cfg, 'datascraper', pop=True)
+        use_web_socket = get_or_raise(self._cfg, 'datascraper', 'use_websocket', pop=True, default=True)
+        self.nodes = (
+            get_or_raise(self._cfg, 'datascraper', 'nodes', 'http', pop=True),
+            get_or_raise(self._cfg, 'datascraper', 'nodes', 'ws', pop=True)
+        )[use_web_socket]
 
-        use_web_socket = datascraper.pop('use_websocket', True)
-        nodes_schema = ('http', 'ws')[use_web_socket]
+        chain_name = get_or_raise(
+            self._cfg,
+            'datascraper',
+            'chain_name',
+            pop=True,
+        ).lower()
 
-        nodes = get_or_raise(datascraper, 'nodes', nodes_schema)
-        self.nodes = nodes
-
-        chain_name = get_or_raise(datascraper, 'chain_name').lower()
-        if chain_name == 'steem':
-            self.is_steem_chain = True
-        elif chain_name == 'golos':
-            self.is_golos_chain = True
-        else:
-            raise ConfigError('Failed to parse config: unsupported chain "%s"' % chain_name)
+        if chain_name not in ['steem', 'golos']:
+            raise ConfigError('Failed to parse chain_type: unknown chain.')
+        self.is_steem_chain = chain_name == 'steem'
+        self.is_golos_chain = chain_name == 'golos'
 
     def _parse_db_section(self):
-        db = get_or_raise(self._cfg, 'db', pop=True)
-
-        host = get_or_raise(db, 'mongo', 'host')
-        port = get_or_raise(db, 'mongo', 'port')
-        db_name = get_or_raise(db, 'mongo', 'db_name')
-        schema = get_or_raise(db, 'mongo', 'schema')
-
         self.mongo = Object(
-            host=host,
-            port=port,
-            db_name=db_name,
-            url='mongodb://%s:%s/%s' % (host, port, db_name),
-            schema=schema
+            host=get_or_raise(self._cfg, 'db', 'mongo', 'host', pop=True),
+            port=get_or_raise(self._cfg, 'db', 'mongo', 'port', pop=True),
+            db_name=get_or_raise(self._cfg, 'db', 'mongo', 'db_name', pop=True),
+            schema=get_or_raise(self._cfg, 'db', 'mongo', 'schema', pop=True)
         )
