@@ -1,9 +1,9 @@
 # Steem datascraper
 
-### Project setup
+### Run datascraper
+
+Copy `conf-temlpate` from `conf/`, then configure logger if needed.
 
 ``` bash
-export SETTINGS_MODULE=datascraper.steem_settings
-
-export LOG_DIR=/path/to/logs  # optional, default is BASE_DIR/logs
+python main.py -c /path/to/config.yaml
 ```
