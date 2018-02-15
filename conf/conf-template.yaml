@@ -19,74 +19,8 @@ db:
     host: 127.0.0.1
     port: 27017
     db_name: SteemData
-
-    schema:
-      post_indexes: &POST_INDEXES
-        - args: [[[identifier, 1]]]
-          kwargs: {unique: true}
-        - args: [[[author, 1]]]
-          kwargs: {}
-        - args: [[[permlink, 1]]]
-          kwargs: {}
-        - args: [[[created, -1]]]
-          kwargs: {}
-        - args: [[[tags, 1]]]
-          kwargs: {}
-        - args: [[[net_rshares, 1]]]
-          kwargs: {}
-        - args: [[[author_reputation, 1]]]
-          kwargs: {}
-        - args: [[[score_hot, -1]]]
-          kwargs: {}
-        - args: [[[score_trending, -1]]]
-          kwargs: {}
-        - args: [[[json_metadata.app, -1]]]
-          kwargs: {background: true, sparse: true}
-        - args: [[[body, text], [title, text]]]
-          kwargs: {background: true}
-
-      collection_types:
-        - &POST post
-        - &COMMENT comment
-
-      update_types:
-        - &ALL all  # update existing and add new instances
-        - &UPDATES updates  # only update existing instances without adding new
-
-      collections:
-        # Steepshot collections
-        - name: Posts
-          indexes: *POST_INDEXES
-          collection_type: *POST
-          update_type: *ALL
-          filter: [app: steepshot]
-        - name: CachedPosts
-          indexes: *POST_INDEXES
-          collection_type: *POST
-          update_type: *UPDATES
-          filter: [app: steepshot]
-        - name: Comments
-          indexes: *POST_INDEXES
-          collection_type: *COMMENT
-          update_type: *ALL
-          filter: [app: steepshot]
-
-        # MOPLA collections
-        - name: MoplaPosts
-          indexes: *POST_INDEXES
-          collection_type: *POST
-          update_type: *ALL
-          filter: [tags: [mopla]]
-        - name: MoplaCachedPosts
-          indexes: *POST_INDEXES
-          collection_type: *POST
-          update_type: *UPDATES
-          filter: [tags: [mopla]]
-        - name: MoplaComments
-          indexes: *POST_INDEXES
-          collection_type: *COMMENT
-          update_type: *ALL
-          filter: [tags: [mopla]]
+    username: steepshot
+    password: steepshot
 
 logger:
   version: 1
@@ -94,7 +28,7 @@ logger:
 
   formatters:
     simple:
-      format: "%(levelname)s\t pid:%(process)d %(asctime)s %(module)s(%(lineno)d): %(message)s"
+      format: "pid:%(process)d %(asctime)s (%(threadName)s) %(module)s(%(lineno)d) - %(levelname)s: %(message)s"
 
   handlers:
     console:
@@ -120,13 +54,6 @@ logger:
       maxBytes: 10485760 # 10MB
       backupCount: 20
       encoding: utf8
-
-  loggers:
-    datascraper:
-      level: ERROR
-      handlers:
-        - console
-      propagate: no
 
   root:
     level: INFO

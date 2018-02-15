@@ -1,11 +1,9 @@
-import logging.config
 import os
 
 import yaml
+from steepcommon.conf import IS_STEEM_PARAM_NAME, IS_GOLOS_PARAM_NAME
 
 from datascraper.utils import Object
-
-logger = logging.getLogger(__name__)
 
 
 class empty: pass  # used in cases where None value is valid
@@ -47,14 +45,37 @@ class Config(object):
     __instance = None
 
     def __init__(self, config_path):
-        self.nodes = []
-        self.mongo = None
-        self.is_steem_chain = False
-        self.is_golos_chain = False
+        self._nodes = []
+        self._mongo = None
 
         self._cfg = None
+        self._logger_conf = None
         self._load_conf(config_path)
         self._parse_config()
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    @property
+    def logger_conf(self):
+        return self._logger_conf
+
+    @property
+    def mongo_uri(self):
+        auth_data = '{username}{password}{at}'.format(
+            username=self._mongo.username if self._mongo.username else '',
+            password=':%s' % self._mongo.password if self._mongo.username and self._mongo.password else '',
+            at='@' if self._mongo.username else ''
+        )
+
+        uri = 'mongodb://{auth}{host}:{port}/{db_name}'.format(
+            auth=auth_data,
+            host=self._mongo.host,
+            port=self._mongo.port,
+            db_name=self._mongo.db_name
+        )
+        return uri
 
     @classmethod
     def get_instance(cls, *args, **kwargs):
@@ -80,13 +101,11 @@ class Config(object):
 
     def _parse_logger_section(self):
         logger_conf = get_or_raise(self._cfg, 'logger', pop=True)
-        logging.config.dictConfig(logger_conf)
-
-        logger.info('Logger config has been successfully loaded.')
+        self._logger_conf = logger_conf
 
     def _parse_datascraper_section(self):
         use_web_socket = get_or_raise(self._cfg, 'datascraper', 'use_websocket', pop=True, default=True)
-        self.nodes = (
+        self._nodes = (
             get_or_raise(self._cfg, 'datascraper', 'nodes', 'http', pop=True),
             get_or_raise(self._cfg, 'datascraper', 'nodes', 'ws', pop=True)
         )[use_web_socket]
@@ -100,13 +119,15 @@ class Config(object):
 
         if chain_name not in ['steem', 'golos']:
             raise ConfigError('Failed to parse chain_type: unknown chain.')
-        self.is_steem_chain = chain_name == 'steem'
-        self.is_golos_chain = chain_name == 'golos'
+
+        os.putenv(IS_STEEM_PARAM_NAME, str(chain_name == 'steem'))
+        os.putenv(IS_GOLOS_PARAM_NAME, str(chain_name == 'golos'))
 
     def _parse_db_section(self):
-        self.mongo = Object(
-            host=get_or_raise(self._cfg, 'db', 'mongo', 'host', pop=True),
-            port=get_or_raise(self._cfg, 'db', 'mongo', 'port', pop=True),
-            db_name=get_or_raise(self._cfg, 'db', 'mongo', 'db_name', pop=True),
-            schema=get_or_raise(self._cfg, 'db', 'mongo', 'schema', pop=True)
+        self._mongo = Object(
+            host=get_or_raise(self._cfg, 'db', 'mongo', 'host'),
+            port=get_or_raise(self._cfg, 'db', 'mongo', 'port'),
+            db_name=get_or_raise(self._cfg, 'db', 'mongo', 'db_name'),
+            username=get_or_raise(self._cfg, 'db', 'mongo', 'username', default=None),
+            password=get_or_raise(self._cfg, 'db', 'mongo', 'password', default=None),
         )
