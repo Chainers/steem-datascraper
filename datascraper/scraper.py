@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from bson import json_util
 from steepcommon.lib import Steem
@@ -16,14 +17,17 @@ logger = logging.getLogger(__name__)
 def process_operation(operation: Operation, mongo: MongoStorage, reversed_mode: bool):
     op_type = operation['type']
 
-    identifier = operation.get_identifier()
-    parent_identifier = operation.get_parent_identifier()
+    if op_type in {'author_reward', 'comment', 'vote', 'delete_comment'}:
+        identifier = operation.get_identifier()
+        parent_identifier = operation.get_parent_identifier()
+        apps_list = get_apps_for_operation(mongo, operation, identifier, parent_identifier, reversed_mode)
 
-    apps_list = get_apps_for_operation(mongo, operation, identifier, parent_identifier, reversed_mode)
-
-    if apps_list and op_type in {'author_reward', 'comment', 'vote', 'delete_comment'}:
-        logger.info('Update post "%s"', identifier)
-        upsert_comment(mongo, identifier, apps_list)
+        if apps_list:
+            thread = threading.Thread(target=upsert_comment,
+                                      name='Thread%s' % identifier,
+                                      args=(mongo, identifier, apps_list),
+                                      daemon=False)
+            thread.start()
     if op_type in {'delegate_vesting_shares', 'return_vesting_delegation'}:
         serialized_op = json.dumps(operation, default=json_util.default)
         insert_delegate_op(mongo, serialized_op)
@@ -36,7 +40,7 @@ def scrape_operations(mongo: MongoStorage,
     settings = Settings(mongo)
     steem = Steem(nodes=config.nodes)
     set_shared_steemd_instance(steem)
-    blockchain = Blockchain(steemd_instance=steem, mode="irreversible")
+    blockchain = Blockchain(steemd_instance=steem, mode='irreversible')
     if reversed_mode:
         history = blockchain.history(
             start_block=last_block,
@@ -63,7 +67,6 @@ def scrape_operations(mongo: MongoStorage,
             else:
                 settings.update_last_block(last_block)
 
-            # logger.info('#%s: (%s)', last_block, blockchain.steem.hostname)
             if last_block % 100 == 0:
                 logger.info('mode: %s - #%s: (%s)', mode_name, last_block, blockchain.steem.hostname)
 

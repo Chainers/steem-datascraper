@@ -47,9 +47,9 @@ class Config(object):
     def __init__(self, config_path):
         self._nodes = []
         self._mongo = None
+        self._logger_conf = None
 
         self._cfg = None
-        self._logger_conf = None
         self._load_conf(config_path)
         self._parse_config()
 
