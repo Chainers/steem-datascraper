@@ -1,8 +1,6 @@
-import json
 import logging
 from contextlib import suppress
 
-from bson import json_util
 from pymongo.errors import DuplicateKeyError
 from steepcommon.conf import APP_COLLECTIONS
 from steepcommon.enums import CollectionType
@@ -12,14 +10,13 @@ from steepcommon.mongo.storage import MongoStorage
 from steepcommon.mongo.wrappers import mark_post_as_deleted
 from steepcommon.utils import has_images
 
-from datascraper.utils import get_post_from_blockchain
+from datascraper.utils import get_post_from_blockchain, Operation
 
 logger = logging.getLogger(__name__)
 
 
-def insert_delegate_op(mongo: MongoStorage, serialized_op: str):
+def insert_delegate_op(mongo: MongoStorage, operation: Operation):
     with suppress(DuplicateKeyError):
-        operation = json.loads(serialized_op, object_hook=json_util.object_hook)
         mongo.Operations.insert_one(operation)
 
 

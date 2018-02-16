@@ -1,9 +1,8 @@
 import logging
 import threading
 
-from bson import json_util
 from steepcommon.lib import Steem
-from steepcommon.lib.blockchain import Blockchain, json
+from steepcommon.lib.blockchain import Blockchain
 from steepcommon.lib.instance import set_shared_steemd_instance
 from steepcommon.mongo.storage import Settings, MongoStorage
 
@@ -29,8 +28,7 @@ def process_operation(operation: Operation, mongo: MongoStorage, reversed_mode: 
                                       daemon=False)
             thread.start()
     if op_type in {'delegate_vesting_shares', 'return_vesting_delegation'}:
-        serialized_op = json.dumps(operation, default=json_util.default)
-        insert_delegate_op(mongo, serialized_op)
+        insert_delegate_op(mongo, operation)
 
 
 def scrape_operations(mongo: MongoStorage,
