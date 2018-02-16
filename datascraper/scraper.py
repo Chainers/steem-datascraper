@@ -13,18 +13,24 @@ from datascraper.utils import Operation, get_apps_for_operation
 logger = logging.getLogger(__name__)
 
 
+def parse_comment_update_operation(operation: Operation, mongo: MongoStorage, reversed_mode: bool):
+    identifier = operation.get_identifier()
+    parent_identifier = operation.get_parent_identifier()
+    apps_list = get_apps_for_operation(mongo, operation, identifier, parent_identifier, reversed_mode)
+
+    if apps_list:
+        upsert_comment(mongo, identifier, apps_list)
+
+
 def process_operation(operation: Operation, mongo: MongoStorage, reversed_mode: bool):
     op_type = operation['type']
 
     if op_type in {'author_reward', 'comment', 'vote', 'delete_comment'}:
         identifier = operation.get_identifier()
-        parent_identifier = operation.get_parent_identifier()
-        apps_list = get_apps_for_operation(mongo, operation, identifier, parent_identifier, reversed_mode)
-
-        if apps_list:
-            thread = threading.Thread(target=upsert_comment,
+        if not (reversed_mode and op_type in {'author_reward', 'vote'}):
+            thread = threading.Thread(target=parse_comment_update_operation,
                                       name='Thread%s' % identifier,
-                                      args=(mongo, identifier, apps_list),
+                                      args=(operation, mongo, reversed_mode),
                                       daemon=False)
             thread.start()
     if op_type in {'delegate_vesting_shares', 'return_vesting_delegation'}:
