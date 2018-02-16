@@ -27,6 +27,9 @@ def upsert_comment(mongo: MongoStorage, post_identifier: str, apps: set):
         post = {'identifier': post_identifier}
         mark_post_as_deleted(post)
         logger.info('Post marked as deleted: "%s"', post_identifier)
+    except Exception as e:
+        logger.exception('Failed to get post from blockchain: %s', e)
+        return
 
     logger.debug('Update post "%s"', post_identifier)
     try:
@@ -57,6 +60,7 @@ def upsert_comment(mongo: MongoStorage, post_identifier: str, apps: set):
                         {'identifier': post_identifier},
                         {'$set': post},
                     )
-
-    except AttributeError as e:
+    except AttributeError:
         logger.error('Failed to update post: "%s"', post_identifier)
+    except Exception as e:
+        logger.exception('Failed to get post from blockchain: %s', e)
