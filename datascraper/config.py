@@ -69,11 +69,14 @@ class Config(object):
             at='@' if self._mongo.username else ''
         )
 
-        uri = 'mongodb://{auth}{host}:{port}/{db_name}'.format(
+        options = '?%s' % '&'.join(['%s=%s' % (k, v) for k, v in self._mongo.options.items()]) if self._mongo.options else ''
+
+        uri = 'mongodb://{auth}{host}:{port}/{db_name}{options}'.format(
             auth=auth_data,
             host=self._mongo.host,
             port=self._mongo.port,
-            db_name=self._mongo.db_name
+            db_name=self._mongo.db_name,
+            options=options
         )
         return uri
 
@@ -130,4 +133,5 @@ class Config(object):
             db_name=get_or_raise(self._cfg, 'db', 'mongo', 'db_name'),
             username=get_or_raise(self._cfg, 'db', 'mongo', 'username', default=None),
             password=get_or_raise(self._cfg, 'db', 'mongo', 'password', default=None),
+            options=get_or_raise(self._cfg, 'db', 'mongo', 'options', default={}),
         )
