@@ -20,16 +20,17 @@ def insert_delegate_op(mongo: MongoStorage, operation: Operation):
         mongo.Operations.insert_one(operation)
 
 
-def upsert_comment(mongo: MongoStorage, post_identifier: str, apps: set):
-    try:
-        post = get_post_from_blockchain(post_identifier)
-    except PostDoesNotExist:
-        post = {'identifier': post_identifier}
-        mark_post_as_deleted(post)
-        logger.info('Post marked as deleted: "%s"', post_identifier)
-    except Exception as e:
-        logger.exception('Failed to get post from blockchain: %s', e)
-        return
+def upsert_comment(mongo: MongoStorage, post_identifier: str, apps: set, post: Post = None):
+    if not post or not isinstance(post, Post):
+        try:
+            post = get_post_from_blockchain(post_identifier)
+        except PostDoesNotExist:
+            post = {'identifier': post_identifier}
+            mark_post_as_deleted(post)
+            logger.info('Post marked as deleted: "%s"', post_identifier)
+        except Exception as e:
+            logger.exception('Failed to get post from blockchain: %s', e)
+            return
 
     logger.debug('Update post "%s"', post_identifier)
     try:
@@ -48,6 +49,9 @@ def upsert_comment(mongo: MongoStorage, post_identifier: str, apps: set):
                         {'$set': post},
                         upsert=True
                     )
+                    comments = Post.get_all_replies(post)
+                    for comment in comments:
+                        upsert_comment(mongo, comment['identifier'], {app}, comment)
                 else:
                     getattr(mongo, collections[CollectionType.comments]).update_one(
                         {'identifier': post_identifier},

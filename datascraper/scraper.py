@@ -80,9 +80,16 @@ def scrape_operations(mongo: MongoStorage,
 def run_scraper(mongo: MongoStorage, config: Config, reversed_mode: bool = False):
     settings = Settings(mongo)
 
+    last_failed_block = -1
+
+    def get_last_block():
+        return settings.last_reversed_block() if reversed_mode else settings.last_block()
+
     for attempt in range(config.max_attempts):
-        last_block = settings.last_reversed_block() if reversed_mode else settings.last_block()
-        if attempt and attempt % config.skip_freq == 0:
+        last_block = get_last_block()
+        if attempt > 0:
+            logger.info('Start scraping blockchain, attempt %s', attempt + 1)
+        if attempt and attempt % config.skip_freq == 0 and last_failed_block == get_last_block():
             last_block = (last_block - 1) if reversed_mode else (last_block + 1)
             logger.info('%s attempt. Skip 1 block.', attempt)
         try:
@@ -94,3 +101,4 @@ def run_scraper(mongo: MongoStorage, config: Config, reversed_mode: bool = False
                 'reversed' if reversed_mode else 'normal',
                 e
             )
+            last_failed_block = get_last_block()
