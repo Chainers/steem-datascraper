@@ -123,7 +123,7 @@ class Config(object):
             get_or_raise(self._cfg, 'datascraper', 'nodes', 'ws', pop=True)
         )[use_web_socket]
 
-        self._max_attempts = get_or_raise(self._cfg, 'datascraper', 'max_attempts', pop=True, default=20)
+        self._max_attempts = get_or_raise(self._cfg, 'datascraper', 'max_attempts', pop=True, default=50)
         self._skip_freq = get_or_raise(self._cfg, 'datascraper', 'skip_freq', pop=True, default=5)
 
         chain_name = get_or_raise(

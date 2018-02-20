@@ -102,3 +102,8 @@ def run_scraper(mongo: MongoStorage, config: Config, reversed_mode: bool = False
                 e
             )
             last_failed_block = get_last_block()
+    else:
+        logger.error(
+            'The maximum number of attempts is reached: %s. Please ensure that specified nodes is working and re-run scraper.',
+            config.max_attempts
+        )
