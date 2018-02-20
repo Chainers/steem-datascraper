@@ -48,6 +48,8 @@ class Config(object):
         self._nodes = []
         self._mongo = None
         self._logger_conf = None
+        self._max_attempts = None
+        self._skip_freq = None
 
         self._cfg = None
         self._load_conf(config_path)
@@ -60,6 +62,14 @@ class Config(object):
     @property
     def logger_conf(self):
         return self._logger_conf
+
+    @property
+    def max_attempts(self):
+        return self._max_attempts
+
+    @property
+    def skip_freq(self):
+        return self._skip_freq
 
     @property
     def mongo_uri(self):
@@ -112,6 +122,9 @@ class Config(object):
             get_or_raise(self._cfg, 'datascraper', 'nodes', 'http', pop=True),
             get_or_raise(self._cfg, 'datascraper', 'nodes', 'ws', pop=True)
         )[use_web_socket]
+
+        self._max_attempts = get_or_raise(self._cfg, 'datascraper', 'max_attempts', pop=True, default=20)
+        self._skip_freq = get_or_raise(self._cfg, 'datascraper', 'skip_freq', pop=True, default=5)
 
         chain_name = get_or_raise(
             self._cfg,

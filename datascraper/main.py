@@ -7,7 +7,7 @@ from steepcommon.lib.blockchain import Blockchain
 from steepcommon.mongo.storage import MongoStorage, Settings
 
 from datascraper.config import Config, ConfigError
-from datascraper.scraper import scrape_operations
+from datascraper.scraper import run_scraper
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +41,13 @@ def datascraper():
         settings.update_last_block(last_block)
         settings.update_last_reversed_block(last_reversed_block)
 
-    thread = threading.Thread(target=scrape_operations,
+    thread = threading.Thread(target=run_scraper,
                               name='BackwardThread',
-                              args=(mongo, cfg, last_reversed_block, True),
+                              args=(mongo, cfg, True),
                               daemon=True)
     thread.start()
 
-    scrape_operations(mongo, cfg, last_block)
+    run_scraper(mongo, cfg, False)
 
 
 if __name__ == '__main__':

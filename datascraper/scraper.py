@@ -75,3 +75,22 @@ def scrape_operations(mongo: MongoStorage,
                 logger.info('mode: %s - #%s: (%s)', mode_name, last_block, blockchain.steem.hostname)
 
     logger.info('Finished to scrape data in mode "%s".', mode_name)
+
+
+def run_scraper(mongo: MongoStorage, config: Config, reversed_mode: bool = False):
+    settings = Settings(mongo)
+
+    for attempt in range(config.max_attempts):
+        last_block = settings.last_reversed_block() if reversed_mode else settings.last_block()
+        if attempt and attempt % config.skip_freq == 0:
+            last_block = (last_block - 1) if reversed_mode else (last_block + 1)
+            logger.info('%s attempt. Skip 1 block.', attempt)
+        try:
+            scrape_operations(mongo, config, last_block, reversed_mode)
+            break
+        except Exception as e:
+            logger.exception(
+                'Failed to scraper operations. Trying to restart scraper from last synced block in direction "%s": "%s"',
+                'reversed' if reversed_mode else 'normal',
+                e
+            )
