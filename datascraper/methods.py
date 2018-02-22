@@ -64,7 +64,7 @@ def upsert_comment(mongo: MongoStorage, post_identifier: str, apps: set, post: P
                         {'identifier': post_identifier},
                         {'$set': post},
                     )
-    except AttributeError:
-        logger.error('Failed to update post: "%s"', post_identifier)
+    except AttributeError as e:
+        logger.error('Failed to update post: "%s". Error: %s', post_identifier, e)
     except Exception as e:
         logger.exception('Failed to get post from blockchain: %s', e)
