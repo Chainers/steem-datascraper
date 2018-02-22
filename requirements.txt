@@ -1,3 +1,4 @@
+cerberus==1.1
 pymongo>=3.6.0
 PyYAML>=3.12
 git+https://github.com/pmartynov/steepshot-common.git@master#egg=steepshot-common
