@@ -17,6 +17,25 @@ datascraper:
       - https://steemd.steepshot.org
       - https://steemd-int.steemit.com
       - https://steemd.steemit.com
+
+  operation_types:
+      post_operations:
+        - comment
+        - delete_comment
+        - vote
+        - author_reward
+      delegate_operations:
+        - delegate_vesting_shares
+        - return_vesting_delegation
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+  databases:
+    forward_db: 7
+    backward_db: 8
+    result_db: 9
+
 db:
   mongo:
     host: 127.0.0.1
@@ -25,6 +44,7 @@ db:
     username: steepshot  # may be absent
     password: steepshot  # may be absent
     options:  # may be absent
+      ssl: "true"
       authMechanism: SCRAM-SHA-1
 
 logger:

@@ -1,16 +1,12 @@
+import logging
+
 from steepcommon.conf import APP_COLLECTIONS
 from steepcommon.enums import CollectionType
-from steepcommon.lib.post import Post
-from steepcommon.libbase.exceptions import PostDoesNotExist
 from steepcommon.mongo import consts
 from steepcommon.mongo.storage import MongoStorage
 from steepcommon.utils import get_apps_from_json_metadata
 
-
-class Object(object):
-    def __init__(self, **kwargs):
-        for kw in kwargs:
-            setattr(self, kw, kwargs[kw])
+logger = logging.getLogger(__name__)
 
 
 class Operation(dict):
@@ -32,11 +28,11 @@ class Operation(dict):
         return ''
 
 
-def get_apps_for_operation(mongo: MongoStorage,
-                           operation: Operation,
+def get_apps_for_operation(operation: Operation,
+                           mongo: MongoStorage,
+                           reversed_mode: bool,
                            identifier: str = None,
-                           parent_identifier: str = None,
-                           reversed_mode: bool = False) -> set:
+                           parent_identifier: str = None) -> set:
     apps = get_apps_from_json_metadata(operation.get('json_metadata'))
 
     for app, collections in APP_COLLECTIONS.items():
@@ -66,17 +62,3 @@ def get_apps_for_operation(mongo: MongoStorage,
                         apps.add(app)
                         continue
     return apps
-
-
-def get_post_from_blockchain(post_identifier: str) -> Post:
-    # This is workaround for TypeError exception which is raised when blockchain returns None
-    p = None
-    for i in range(5):
-        try:
-            p = Post(post_identifier)
-            break
-        except TypeError:
-            continue
-    if not p:
-        raise PostDoesNotExist()
-    return p

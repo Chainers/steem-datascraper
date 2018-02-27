@@ -3,10 +3,14 @@ import os
 import yaml
 from steepcommon.conf import IS_STEEM_PARAM_NAME, IS_GOLOS_PARAM_NAME
 
-from datascraper.utils import Object
-
 
 class empty: pass  # used in cases where None value is valid
+
+
+class Object(object):
+    def __init__(self, **kwargs):
+        for kw in kwargs:
+            setattr(self, kw, kwargs[kw])
 
 
 class ConfigError(Exception):
@@ -47,6 +51,10 @@ class Config(object):
     def __init__(self, config_path):
         self._nodes = []
         self._mongo = None
+        self._redis = None
+        self._operation_types = []
+        self._post_operations = []
+        self._delegate_operations = []
         self._logger_conf = None
         self._max_attempts = None
         self._skip_freq = None
@@ -60,6 +68,18 @@ class Config(object):
         return self._nodes
 
     @property
+    def operation_types(self):
+        return self._operation_types
+
+    @property
+    def post_operations(self):
+        return self._post_operations
+
+    @property
+    def delegate_operations(self):
+        return self._delegate_operations
+
+    @property
     def logger_conf(self):
         return self._logger_conf
 
@@ -70,6 +90,18 @@ class Config(object):
     @property
     def skip_freq(self):
         return self._skip_freq
+
+    @property
+    def redis_host(self):
+        return self._redis.host
+
+    @property
+    def redis_port(self):
+        return self._redis.port
+
+    @property
+    def redis_databases(self):
+        return self._redis.databases
 
     @property
     def mongo_uri(self):
@@ -110,6 +142,7 @@ class Config(object):
     def _parse_config(self):
         self._parse_logger_section()
         self._parse_datascraper_section()
+        self._parse_redis_section()
         self._parse_db_section()
 
     def _parse_logger_section(self):
@@ -126,6 +159,11 @@ class Config(object):
         self._max_attempts = get_or_raise(self._cfg, 'datascraper', 'max_attempts', pop=True, default=50)
         self._skip_freq = get_or_raise(self._cfg, 'datascraper', 'skip_freq', pop=True, default=5)
 
+        self._post_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'post_operations', pop=True)
+        self._delegate_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'delegate_operations', pop=True)
+        self._operation_types.extend(self._post_operations)
+        self._operation_types.extend(self._delegate_operations)
+
         chain_name = get_or_raise(
             self._cfg,
             'datascraper',
@@ -138,6 +176,13 @@ class Config(object):
 
         os.putenv(IS_STEEM_PARAM_NAME, str(chain_name == 'steem'))
         os.putenv(IS_GOLOS_PARAM_NAME, str(chain_name == 'golos'))
+
+    def _parse_redis_section(self):
+        self._redis = Object(
+            host=get_or_raise(self._cfg, 'redis', 'host'),
+            port=get_or_raise(self._cfg, 'redis', 'port'),
+            databases=get_or_raise(self._cfg, 'redis', 'databases', default={}),
+        )
 
     def _parse_db_section(self):
         self._mongo = Object(
