@@ -8,7 +8,7 @@ from cerberus import Validator
 from pymongo.errors import DuplicateKeyError
 from redis import Redis
 from steepcommon.conf import APP_COLLECTIONS
-from steepcommon.enums import CollectionType
+from steepcommon.enums import CollectionType, Application
 from steepcommon.lib import Steem
 from steepcommon.lib.instance import set_shared_steemd_instance
 from steepcommon.lib.post import Post
@@ -38,6 +38,7 @@ class WorkerProcess(multiprocessing.Process):
         self.daemon = daemon
         self.polling_freq = polling_freq
         self.steem = Steem(nodes=self.config.nodes)
+        self.mongo = None
         set_shared_steemd_instance(self.steem)
 
     def _insert_delegate_op(self, operation: Operation):
@@ -56,7 +57,7 @@ class WorkerProcess(multiprocessing.Process):
             raise PostDoesNotExist()
         return p
 
-    def _upsert_comment(self, post_identifier: str, apps: set, post: Post = None):
+    def _upsert_comment(self, post_identifier: str, apps: set, post: Post = None, update_root=True):
         if not post or not isinstance(post, Post):
             try:
                 post = self._get_post_from_blockchain(post_identifier)
@@ -81,28 +82,30 @@ class WorkerProcess(multiprocessing.Process):
 
                         v = Validator(POST_SCHEMA, allow_unknown=True)
                         if not v.validate(post):
-                            logger.info('The post: {post} not valid!'.format(post=post.get('identifier', '')))
-                            logger.info('The reblogged_by Field: {}'.format(post.get('reblogged_by')))
+                            logger.error('Failed to validate post %s. List of errors: %s', post_identifier, v.errors)
                             return
 
-                        if not has_images(post.get('body', '')):
+                        if app == Application.steepshot and not has_images(post.get('body', '')):
                             mark_post_as_deleted(post)
                             logger.info('Post marked as deleted: "%s"', post_identifier)
+
                         getattr(self.mongo, collections[CollectionType.posts]).update_one(
                             {'identifier': post_identifier},
-                            {'$set': post},
+                            {'$set': v.document},
                             upsert=True
                         )
                         comments = Post.get_all_replies(post)
                         for comment in comments:
-                            self._upsert_comment(comment['identifier'], {app}, comment)
+                            self._upsert_comment(comment['identifier'], {app}, comment, update_root=False)
                     else:
-                        # TODO: we need update main post for comment
                         getattr(self.mongo, collections[CollectionType.comments]).update_one(
                             {'identifier': post_identifier},
                             {'$set': post},
                             upsert=True
                         )
+
+                        if update_root:
+                            self._upsert_comment(post.root_identifier, {app})
                 else:
                     for collection in collections.values():
                         getattr(self.mongo, collection).update_one(
@@ -144,11 +147,9 @@ class WorkerProcess(multiprocessing.Process):
                     self._process_block(self.redis_obj.rpop(self.redis_list_name))
                 except TypeError as error:
                     logger.error('We got the following error: {error}.'
-                                 'Current size: {size} '
-                                 'of list {list}'.format(error=error,
-                                                         size=self.redis_obj.llen(self.redis_list_name),
-                                                         list=self.redis_list_name))
+                                 'Current size of list {list}: '
+                                 '{size}.'.format(error=error,
+                                                  size=self.redis_obj.llen(self.redis_list_name),
+                                                  list=self.redis_list_name))
             else:
                 time.sleep(self.polling_freq)
-
-

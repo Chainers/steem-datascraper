@@ -1,8 +1,7 @@
-import os
-import pickle
 import argparse
 import logging.config
 import multiprocessing
+import os
 import time
 
 from redis import Redis
@@ -51,8 +50,8 @@ def block_updater(redis_result_obj: Redis, config: Config):
         if reversed_blocks:
             for block in reversed_blocks:
                 if int(block) < last_reversed_block:
-                        settings.update_last_reversed_block(int(block))
-                        redis_result_obj.lrem('backward_db', block)
+                    settings.update_last_reversed_block(int(block))
+                    redis_result_obj.lrem('backward_db', block)
 
 
 def datascraper():
@@ -84,20 +83,16 @@ def datascraper():
         settings.update_last_block(last_block)
         settings.update_last_reversed_block(last_reversed_block)
 
-    redis_host = cfg.redis_host
-    redis_port = cfg.redis_port
-    redis_databases = cfg.redis_databases
-
     redis_objs = {}
 
     try:
-        for db_name, index in redis_databases.items():
-            redis_objs[db_name] = Redis(host=redis_host, port=redis_port, db=index)
+        for db_name, index in cfg.redis_databases.items():
+            redis_objs[db_name] = Redis(host=cfg.redis_host, port=cfg.redis_port, db=index)
     except RedisError as error:
         logger.error(error)
         return
 
-    max_number_workers = os.cpu_count()//2 if os.cpu_count()//2 else 1
+    max_number_workers = os.cpu_count() // 2 if os.cpu_count() // 2 else 1
 
     forward_process = ScrapeProcess(name='ForwardProcess', config=cfg,
                                     redis_obj=redis_objs['forward_db'],
@@ -130,11 +125,11 @@ def datascraper():
         worker.start()
 
     inspector_process = multiprocessing.Process(target=inspector, name='InspectorProcess',
-                                                args=(redis_objs, ))
+                                                args=(redis_objs,))
     inspector_process.start()
 
     block_updater_process = multiprocessing.Process(target=block_updater, name='BlockUpdaterProcess',
-                                                    args=(redis_objs['result_db'], cfg, ))
+                                                    args=(redis_objs['result_db'], cfg,))
     block_updater_process.start()
 
 

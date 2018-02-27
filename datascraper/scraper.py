@@ -1,7 +1,7 @@
 import logging
 import multiprocessing
 import pickle
-from typing import Union
+from typing import Optional
 
 from redis import Redis
 from steepcommon.lib import Steem
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class ScrapeProcess(multiprocessing.Process):
     def __init__(self, name: str, config: Config, redis_list_name: str,
                  redis_obj: Redis, reversed_mode: bool = False,
-                 daemon: Union[bool, None] = None):
+                 daemon: Optional[bool] = None):
         multiprocessing.Process.__init__(self)
         self.name = name
         self.daemon = daemon
