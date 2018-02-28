@@ -146,10 +146,10 @@ class WorkerProcess(multiprocessing.Process):
                 try:
                     self._process_block(self.redis_obj.rpop(self.redis_list_name))
                 except TypeError as error:
-                    logger.error('We got the following error: {error}.'
-                                 'Current size of list {list}: '
-                                 '{size}.'.format(error=error,
-                                                  size=self.redis_obj.llen(self.redis_list_name),
-                                                  list=self.redis_list_name))
+                    logger.warning('Queue is empty: {error}.'
+                                   'Current size of list {list}: '
+                                   '{size}.'.format(error=error,
+                                                    size=self.redis_obj.llen(self.redis_list_name),
+                                                    list=self.redis_list_name))
             else:
                 time.sleep(self.polling_freq)

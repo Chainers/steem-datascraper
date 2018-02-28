@@ -41,7 +41,7 @@ POST_SCHEMA = {
     'total_vote_weight': {'type': 'integer', 'coerce': int},
     'children': {'type': 'integer', 'coerce': int},
     'beneficiaries': {'type': 'list',
-                      'empty': False,
+                      'empty': True,
                       'schema': {'type': 'dict',
                                  'schema': {'weight': {'type': 'integer', 'coerce': int},
                                             'account': {'type': 'string'}}}},
