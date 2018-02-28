@@ -17,9 +17,13 @@ from datascraper.worker import WorkerProcess
 logger = logging.getLogger(__name__)
 
 
+# TODO: We can monitor backward process here and terminate it when reach first block of blockchain
+# def inspector(redis_objs: dict, backward_process):
 def inspector(redis_objs: dict):
     while True:
         for db_name, redis_obj in redis_objs.items():
+            # if db_name == 'backward_db' and (not backward_process.is_alive() and redis_obj.llen(db_name) == 0):
+            #     backward_process.terminate()
             logger.info('Number of elements {number} in '
                         '"{db_name}" database.'.format(number=redis_obj.llen(db_name),
                                                        db_name=db_name))
@@ -109,6 +113,7 @@ def datascraper():
                                polling_freq=1)
         worker.start()
 
+    # TODO: Need to implement the ability to perform backward scraping using a few processes
     backward_process = ScrapeProcess(name='BackwardProcess', config=cfg,
                                      redis_obj=redis_objs['backward_db'],
                                      redis_list_name='backward_db',
@@ -125,6 +130,7 @@ def datascraper():
         worker.start()
 
     inspector_process = multiprocessing.Process(target=inspector, name='InspectorProcess',
+                                                # args=(redis_objs, backward_process,))
                                                 args=(redis_objs,))
     inspector_process.start()
 
