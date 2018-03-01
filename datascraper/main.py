@@ -96,7 +96,7 @@ def datascraper():
         logger.error(error)
         return
 
-    max_number_workers = os.cpu_count() // 2 if os.cpu_count() // 2 else 1
+    max_number_workers = os.cpu_count() if os.cpu_count() else 1
 
     forward_process = ScrapeProcess(name='ForwardProcess', config=cfg,
                                     redis_obj=redis_objs['forward_db'],
@@ -110,7 +110,7 @@ def datascraper():
                                redis_result_obj=redis_objs['result_db'],
                                redis_list_name='forward_db', config=cfg,
                                reversed_mode=False, daemon=False,
-                               polling_freq=1)
+                               polling_freq=0.2)
         worker.start()
 
     # TODO: Need to implement the ability to perform backward scraping using a few processes
@@ -126,7 +126,7 @@ def datascraper():
                                redis_result_obj=redis_objs['result_db'],
                                redis_list_name='backward_db', config=cfg,
                                reversed_mode=True, daemon=False,
-                               polling_freq=10)
+                               polling_freq=1)
         worker.start()
 
     inspector_process = multiprocessing.Process(target=inspector, name='InspectorProcess',

@@ -2,9 +2,9 @@ import logging
 import multiprocessing
 import pickle
 import time
-from contextlib import suppress
-from cerberus import Validator
+from typing import Union
 
+from cerberus import Validator
 from pymongo.errors import DuplicateKeyError
 from redis import Redis
 from steepcommon.conf import APP_COLLECTIONS
@@ -15,11 +15,11 @@ from steepcommon.lib.post import Post
 from steepcommon.libbase.exceptions import PostDoesNotExist
 from steepcommon.mongo.storage import MongoStorage
 from steepcommon.mongo.wrappers import mark_post_as_deleted
-from steepcommon.utils import has_images
+from steepcommon.utils import has_images, retry
 
 from datascraper.config import Config
-from datascraper.utils import Operation, get_apps_for_operation
 from datascraper.schema import POST_SCHEMA
+from datascraper.utils import Operation, get_apps_for_operation
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class WorkerProcess(multiprocessing.Process):
     def __init__(self, name: str, redis_obj: Redis, redis_result_obj: Redis,
                  redis_list_name: str, config: Config, reversed_mode: bool,
-                 daemon: bool, polling_freq: int):
+                 daemon: bool, polling_freq: Union[int, float]):
         multiprocessing.Process.__init__(self)
         self.name = name
         self.redis_obj = redis_obj
@@ -42,8 +42,7 @@ class WorkerProcess(multiprocessing.Process):
         set_shared_steemd_instance(self.steem)
 
     def _insert_delegate_op(self, operation: Operation):
-        with suppress(DuplicateKeyError):
-            self.mongo.Operations.insert_one(operation)
+        retry(self.mongo.Operations.insert_one, 3, DuplicateKeyError)(operation)
 
     def _get_post_from_blockchain(self, post_identifier: str) -> Post:
         p = None
@@ -89,7 +88,7 @@ class WorkerProcess(multiprocessing.Process):
                             mark_post_as_deleted(post)
                             logger.info('Post marked as deleted: "%s"', post_identifier)
 
-                        getattr(self.mongo, collections[CollectionType.posts]).update_one(
+                        retry(getattr(self.mongo, collections[CollectionType.posts]).update_one, 3, DuplicateKeyError)(
                             {'identifier': post_identifier},
                             {'$set': v.document},
                             upsert=True
@@ -98,7 +97,8 @@ class WorkerProcess(multiprocessing.Process):
                         for comment in comments:
                             self._upsert_comment(comment['identifier'], {app}, comment, update_root=False)
                     else:
-                        getattr(self.mongo, collections[CollectionType.comments]).update_one(
+                        retry(getattr(self.mongo,
+                                      collections[CollectionType.comments]).update_one, 3, DuplicateKeyError)(
                             {'identifier': post_identifier},
                             {'$set': post},
                             upsert=True
@@ -108,7 +108,7 @@ class WorkerProcess(multiprocessing.Process):
                             self._upsert_comment(post.root_identifier, {app})
                 else:
                     for collection in collections.values():
-                        getattr(self.mongo, collection).update_one(
+                        retry(getattr(self.mongo, collection).update_one, 3, DuplicateKeyError)(
                             {'identifier': post_identifier},
                             {'$set': post},
                         )
