@@ -84,13 +84,15 @@ class WorkerProcess(multiprocessing.Process):
                             logger.error('Failed to validate post %s. List of errors: %s', post_identifier, v.errors)
                             return
 
-                        if app == Application.steepshot and not has_images(post.get('body', '')):
-                            mark_post_as_deleted(post)
+                        validated_post = v.document
+
+                        if app == Application.steepshot and not has_images(validated_post.get('body', '')):
+                            mark_post_as_deleted(validated_post)
                             logger.info('Post marked as deleted: "%s"', post_identifier)
 
                         retry(getattr(self.mongo, collections[CollectionType.posts]).update_one, 3, DuplicateKeyError)(
                             {'identifier': post_identifier},
-                            {'$set': v.document},
+                            {'$set': validated_post},
                             upsert=True
                         )
                         comments = Post.get_all_replies(post)
