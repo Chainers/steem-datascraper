@@ -17,7 +17,7 @@ POST_SCHEMA = {
     'percent_steem_dollars': {'type': 'integer', 'coerce': int},
     'title': {'type': 'string', 'empty': False},
     'tags': {'type': 'list',
-             'empty': False,
+             'empty': True,
              'schema': {'type': 'string'}},
     'curator_payout_value': {'type': 'dict',
                              'schema': {'asset': {'type': 'string'},
