@@ -117,7 +117,7 @@ class WorkerProcess(multiprocessing.Process):
         except AttributeError as e:
             logger.error('Failed to update post: "%s". Error: %s', post_identifier, e)
         except Exception as e:
-            logger.exception('Failed to get post from blockchain: %s', e)
+            logger.exception('Failed to process post "%s". Error: %s', post_identifier, e)
 
     def _parse_comment_update_operation(self, operation: Operation):
         identifier = operation.get_identifier()
