@@ -91,7 +91,9 @@ def datascraper():
 
     try:
         for db_name, index in cfg.redis_databases.items():
-            redis_objs[db_name] = Redis(host=cfg.redis_host, port=cfg.redis_port, db=index)
+            client = Redis(host=cfg.redis_host, port=cfg.redis_port, db=index)
+            client.flushdb()
+            redis_objs[db_name] = client
     except RedisError as error:
         logger.error(error)
         return
