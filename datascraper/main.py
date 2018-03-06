@@ -98,7 +98,7 @@ def datascraper():
         logger.error(error)
         return
 
-    max_number_workers = os.cpu_count() if os.cpu_count() else 1
+    max_number_workers = min(4, os.cpu_count())
 
     forward_process = ScrapeProcess(name='ForwardProcess', config=cfg,
                                     redis_obj=redis_objs['forward_db'],
