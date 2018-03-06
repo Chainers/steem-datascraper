@@ -46,7 +46,9 @@ def get_apps_for_operation(operation: Operation,
                 res = retry(mongo_posts.find_one, 3, ConnectionFailure)(
                     {'identifier': identifier, consts.DELETED_FIELD: {'$ne': True}}
                 )
-                if res:
+                if isinstance(res, Exception):
+                    logger.error('Failed to get data from database: %s', res)
+                elif res:
                     if not reversed_mode:
                         apps.add(app)
                     # If scraper works in reverse mode that we don't need to update already existing posts
@@ -55,7 +57,9 @@ def get_apps_for_operation(operation: Operation,
                 res = retry(mongo_posts.find_one, 3, ConnectionFailure)(
                     {'identifier': parent_identifier, consts.DELETED_FIELD: {'$ne': True}}
                 )
-                if res:
+                if isinstance(res, Exception):
+                    logger.error('Failed to get data from database: %s', res)
+                elif res:
                     if not reversed_mode:
                         apps.add(app)
                     continue
@@ -65,7 +69,9 @@ def get_apps_for_operation(operation: Operation,
                     res = retry(mongo_comments.find_one, 3, ConnectionFailure)(
                         {'identifier': parent_identifier}
                     )
-                    if res:
+                    if isinstance(res, Exception):
+                        logger.error('Failed to get data from database: %s', res)
+                    elif res:
                         apps.add(app)
                         continue
     return apps
