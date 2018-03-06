@@ -42,9 +42,9 @@ class WorkerProcess(multiprocessing.Process):
         set_shared_steemd_instance(self.steem)
 
     def _insert_delegate_op(self, operation: Operation):
-        result = retry(self.mongo.Operations.insert_one, 3, (DuplicateKeyError, ConnectionFailure))(operation)
+        result = retry(self.mongo.Operations.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(operation)
         if isinstance(result, Exception):
-            logger.error('Failed to insert operation: %.', result)
+            logger.error('Failed to insert operation: %s.', result)
 
     def _get_post_from_blockchain(self, post_identifier: str) -> Post:
         p = None
@@ -92,7 +92,7 @@ class WorkerProcess(multiprocessing.Process):
                             mark_post_as_deleted(validated_post)
                             logger.info('Post marked as deleted: "%s"', post_identifier)
 
-                        result = retry(getattr(self.mongo, collections[CollectionType.posts]).update_one, 3,
+                        result = retry(getattr(self.mongo, collections[CollectionType.posts]).update_one, 5,
                                        (DuplicateKeyError, ConnectionFailure))(
                             {'identifier': post_identifier},
                             {'$set': validated_post},
@@ -104,7 +104,7 @@ class WorkerProcess(multiprocessing.Process):
                         for comment in comments:
                             self._upsert_comment(comment['identifier'], {app}, comment, update_root=False)
                     else:
-                        result = retry(getattr(self.mongo, collections[CollectionType.comments]).update_one, 3,
+                        result = retry(getattr(self.mongo, collections[CollectionType.comments]).update_one, 5,
                                        (DuplicateKeyError, ConnectionFailure))(
                             {'identifier': post_identifier},
                             {'$set': post},
@@ -117,7 +117,7 @@ class WorkerProcess(multiprocessing.Process):
                             self._upsert_comment(post.root_identifier, {app})
                 else:
                     for collection in collections.values():
-                        result = retry(getattr(self.mongo, collection).update_one, 3, (DuplicateKeyError, ConnectionFailure))(
+                        result = retry(getattr(self.mongo, collection).update_one, 5, (DuplicateKeyError, ConnectionFailure))(
                             {'identifier': post_identifier},
                             {'$set': post},
                         )

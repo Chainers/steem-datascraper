@@ -43,7 +43,7 @@ def get_apps_for_operation(operation: Operation,
         mongo_posts = getattr(mongo, posts_name, None)
         if mongo_posts:
             if identifier:
-                res = retry(mongo_posts.find_one, 3, ConnectionFailure)(
+                res = retry(mongo_posts.find_one, 5, ConnectionFailure)(
                     {'identifier': identifier, consts.DELETED_FIELD: {'$ne': True}}
                 )
                 if isinstance(res, Exception):
@@ -54,7 +54,7 @@ def get_apps_for_operation(operation: Operation,
                     # If scraper works in reverse mode that we don't need to update already existing posts
                     continue
             if parent_identifier:
-                res = retry(mongo_posts.find_one, 3, ConnectionFailure)(
+                res = retry(mongo_posts.find_one, 5, ConnectionFailure)(
                     {'identifier': parent_identifier, consts.DELETED_FIELD: {'$ne': True}}
                 )
                 if isinstance(res, Exception):
@@ -66,7 +66,7 @@ def get_apps_for_operation(operation: Operation,
 
                 mongo_comments = getattr(mongo, comments_name, None)
                 if mongo_comments:
-                    res = retry(mongo_comments.find_one, 3, ConnectionFailure)(
+                    res = retry(mongo_comments.find_one, 5, ConnectionFailure)(
                         {'identifier': parent_identifier}
                     )
                     if isinstance(res, Exception):
