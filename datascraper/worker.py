@@ -5,7 +5,7 @@ import time
 from typing import Union
 
 from cerberus import Validator
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, ConnectionFailure
 from redis import Redis
 from steepcommon.conf import APP_COLLECTIONS
 from steepcommon.enums import CollectionType, Application
@@ -42,7 +42,7 @@ class WorkerProcess(multiprocessing.Process):
         set_shared_steemd_instance(self.steem)
 
     def _insert_delegate_op(self, operation: Operation):
-        retry(self.mongo.Operations.insert_one, 3, DuplicateKeyError)(operation)
+        retry(self.mongo.Operations.insert_one, 3, (DuplicateKeyError, ConnectionFailure))(operation)
 
     def _get_post_from_blockchain(self, post_identifier: str) -> Post:
         p = None
@@ -90,7 +90,7 @@ class WorkerProcess(multiprocessing.Process):
                             mark_post_as_deleted(validated_post)
                             logger.info('Post marked as deleted: "%s"', post_identifier)
 
-                        retry(getattr(self.mongo, collections[CollectionType.posts]).update_one, 3, DuplicateKeyError)(
+                        retry(getattr(self.mongo, collections[CollectionType.posts]).update_one, 3, (DuplicateKeyError, ConnectionFailure))(
                             {'identifier': post_identifier},
                             {'$set': validated_post},
                             upsert=True
@@ -100,7 +100,7 @@ class WorkerProcess(multiprocessing.Process):
                             self._upsert_comment(comment['identifier'], {app}, comment, update_root=False)
                     else:
                         retry(getattr(self.mongo,
-                                      collections[CollectionType.comments]).update_one, 3, DuplicateKeyError)(
+                                      collections[CollectionType.comments]).update_one, 3, (DuplicateKeyError, ConnectionFailure))(
                             {'identifier': post_identifier},
                             {'$set': post},
                             upsert=True
@@ -110,7 +110,7 @@ class WorkerProcess(multiprocessing.Process):
                             self._upsert_comment(post.root_identifier, {app})
                 else:
                     for collection in collections.values():
-                        retry(getattr(self.mongo, collection).update_one, 3, DuplicateKeyError)(
+                        retry(getattr(self.mongo, collection).update_one, 3, (DuplicateKeyError, ConnectionFailure))(
                             {'identifier': post_identifier},
                             {'$set': post},
                         )

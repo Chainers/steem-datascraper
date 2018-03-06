@@ -27,6 +27,7 @@ class ScrapeProcess(multiprocessing.Process):
         self.redis_list_name = redis_list_name
         self.reversed_mode = reversed_mode
         self.steem = Steem(nodes=self.config.nodes)
+        self.mongo = None
         set_shared_steemd_instance(self.steem)
 
     def _check_operation(self, operation):

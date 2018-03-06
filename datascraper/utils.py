@@ -1,10 +1,11 @@
 import logging
 
+from pymongo.errors import ConnectionFailure
 from steepcommon.conf import APP_COLLECTIONS
 from steepcommon.enums import CollectionType
 from steepcommon.mongo import consts
 from steepcommon.mongo.storage import MongoStorage
-from steepcommon.utils import get_apps_from_json_metadata
+from steepcommon.utils import get_apps_from_json_metadata, retry
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +43,18 @@ def get_apps_for_operation(operation: Operation,
         mongo_posts = getattr(mongo, posts_name, None)
         if mongo_posts:
             if identifier:
-                res = mongo_posts.find_one({'identifier': identifier, consts.DELETED_FIELD: {'$ne': True}})
+                res = retry(mongo_posts.find_one, 3, ConnectionFailure)(
+                    {'identifier': identifier, consts.DELETED_FIELD: {'$ne': True}}
+                )
                 if res:
                     if not reversed_mode:
                         apps.add(app)
                     # If scraper works in reverse mode that we don't need to update already existing posts
                     continue
             if parent_identifier:
-                res = mongo_posts.find_one({'identifier': parent_identifier, consts.DELETED_FIELD: {'$ne': True}})
+                res = retry(mongo_posts.find_one, 3, ConnectionFailure)(
+                    {'identifier': parent_identifier, consts.DELETED_FIELD: {'$ne': True}}
+                )
                 if res:
                     if not reversed_mode:
                         apps.add(app)
@@ -57,7 +62,9 @@ def get_apps_for_operation(operation: Operation,
 
                 mongo_comments = getattr(mongo, comments_name, None)
                 if mongo_comments:
-                    res = mongo_comments.find_one({'identifier': parent_identifier})
+                    res = retry(mongo_comments.find_one, 3, ConnectionFailure)(
+                        {'identifier': parent_identifier}
+                    )
                     if res:
                         apps.add(app)
                         continue
