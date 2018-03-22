@@ -146,6 +146,9 @@ class WorkerProcess(multiprocessing.Process):
                     self._parse_comment_update_operation(Operation(operation))
             if op_type in self.config.delegate_operations:
                 self._insert_delegate_op(operation)
+            if op_type in self.config.transfer_operations:
+                # what should i do here?
+                pass
         self.redis_result_obj.lpush(self.redis_list_name, int(block_number))
 
     def run(self):

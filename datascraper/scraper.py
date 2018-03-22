@@ -33,6 +33,9 @@ class ScrapeProcess(multiprocessing.Process):
     def _check_operation(self, operation):
         op_type = operation['type']
         if op_type in self.config.operation_types:
+            if op_type in self.config.transfer_operations:
+                # what should i return here ?
+                return True
             if op_type in self.config.delegate_operations:
                 return True
             if op_type in self.config.post_operations:

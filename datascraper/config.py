@@ -55,6 +55,7 @@ class Config(object):
         self._operation_types = []
         self._post_operations = []
         self._delegate_operations = []
+        self._transfer_operations = []
         self._logger_conf = None
         self._max_attempts = None
         self._skip_freq = None
@@ -78,6 +79,10 @@ class Config(object):
     @property
     def delegate_operations(self):
         return self._delegate_operations
+
+    @property
+    def transfer_operations(self):
+        return self._transfer_operations
 
     @property
     def logger_conf(self):
@@ -161,8 +166,11 @@ class Config(object):
 
         self._post_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'post_operations', pop=True)
         self._delegate_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'delegate_operations', pop=True)
+        self._transfer_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'transfer_operations', pop=True)
+
         self._operation_types.extend(self._post_operations)
         self._operation_types.extend(self._delegate_operations)
+        self._operation_types.extend(self._transfer_operations)
 
         chain_name = get_or_raise(
             self._cfg,
