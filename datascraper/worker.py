@@ -19,7 +19,7 @@ from steepcommon.utils import has_images, retry
 
 from datascraper.config import Config
 from datascraper.schema import POST_SCHEMA
-from datascraper.utils import Operation, get_apps_for_operation, parse_trx_amount
+from datascraper.utils import Operation, get_apps_for_operation
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +46,10 @@ class WorkerProcess(multiprocessing.Process):
         if isinstance(result, Exception):
             logger.error('Failed to insert operation: %s.', result)
 
-    def _insert_transfer_to_steepshot(self, operation: Operation):
+    def _insert_curator(self, operation: Operation):
         amount, currency = operation['amount'].split()
         amount = float(amount)
+        print(operation['to'])
 
         data = {
             'username': operation['from'],
@@ -162,8 +163,8 @@ class WorkerProcess(multiprocessing.Process):
             if op_type in self.config.delegate_operations:
                 self._insert_delegate_op(operation)
             if op_type in self.config.transfer_operations:
-                if operation['to'] == 'minnowbooster':
-                    self._insert_transfer_to_steepshot(operation)
+                if operation['to'] in self.config.accounts_for_transfer:
+                    self._insert_curator(operation)
         self.redis_result_obj.lpush(self.redis_list_name, int(block_number))
 
     def run(self):
