@@ -19,7 +19,7 @@ from steepcommon.utils import has_images, retry
 
 from datascraper.config import Config
 from datascraper.schema import POST_SCHEMA
-from datascraper.utils import Operation, get_apps_for_operation
+from datascraper.utils import Operation, get_apps_for_operation, parse_trx_amount
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,21 @@ class WorkerProcess(multiprocessing.Process):
 
     def _insert_delegate_op(self, operation: Operation):
         result = retry(self.mongo.Operations.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(operation)
+        if isinstance(result, Exception):
+            logger.error('Failed to insert operation: %s.', result)
+
+    def _insert_transfer_to_steepshot(self, operation: Operation):
+        amount, currency = operation['amount'].split()
+        amount = float(amount)
+
+        data = {
+            'username': operation['from'],
+            'trx_timestamp': operation['timestamp'],
+            'sum': amount,
+            'currency': currency,
+        }
+
+        result = retry(self.mongo.Curators.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(data)
         if isinstance(result, Exception):
             logger.error('Failed to insert operation: %s.', result)
 
@@ -147,8 +162,8 @@ class WorkerProcess(multiprocessing.Process):
             if op_type in self.config.delegate_operations:
                 self._insert_delegate_op(operation)
             if op_type in self.config.transfer_operations:
-                # what should i do here?
-                pass
+                if operation['to'] == 'minnowbooster':
+                    self._insert_transfer_to_steepshot(operation)
         self.redis_result_obj.lpush(self.redis_list_name, int(block_number))
 
     def run(self):
