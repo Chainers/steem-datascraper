@@ -19,20 +19,23 @@ datascraper:
       - https://steemd.steemit.com
 
   operation_types:
-      post_operations:
-      #  - comment
-      #  - delete_comment
-      #  - vote
-        - author_reward
-      delegate_operations:
-        - delegate_vesting_shares
-      #  - return_vesting_delegation
-      transfer_operations:
-        - transfer
+    post_operations:
+      - comment
+      - delete_comment
+      - vote
+      - author_reward
+    delegate_operations:
+      - delegate_vesting_shares
+      - return_vesting_delegation
+    transfer_operations:
+      - transfer
 
-  accounts_for_transfer:
-    - steepshot
-    - minnowbooster
+  curators_payouts:
+    accounts_for_transfer:
+      - steepshot
+    currencies:
+      - STEEM
+    minimal_sum: 0.5
 
 redis:
   host: 127.0.0.1
@@ -47,11 +50,11 @@ db:
     host: 127.0.0.1
     port: 27017
     db_name: SteemData
-    #username: steepshot  # may be absent
-    #password: steepshot  # may be absent
-    #options:  # may be absent
-    #  ssl: "true"
-    #  authMechanism: SCRAM-SHA-1
+    username: steepshot  # may be absent
+    password: steepshot  # may be absent
+    options:  # may be absent
+      ssl: "true"
+      authMechanism: SCRAM-SHA-1
 
 logger:
   version: 1

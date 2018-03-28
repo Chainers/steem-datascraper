@@ -56,7 +56,7 @@ class Config(object):
         self._post_operations = []
         self._delegate_operations = []
         self._transfer_operations = []
-        self._accounts_for_transfer = []
+        self._curators_payouts = []
         self._logger_conf = None
         self._max_attempts = None
         self._skip_freq = None
@@ -86,8 +86,8 @@ class Config(object):
         return self._transfer_operations
 
     @property
-    def accounts_for_transfer(self):
-        return self._accounts_for_transfer
+    def curators_payouts(self):
+        return self._curators_payouts
 
     @property
     def logger_conf(self):
@@ -172,7 +172,7 @@ class Config(object):
         self._post_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'post_operations', pop=True)
         self._delegate_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'delegate_operations', pop=True)
         self._transfer_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'transfer_operations', pop=True)
-        self._accounts_for_transfer = get_or_raise(self._cfg, 'datascraper', 'accounts_for_transfer', pop=True)
+        self._curators_payouts = get_or_raise(self._cfg, 'datascraper', 'curators_payouts', pop=True)
 
         self._operation_types.extend(self._post_operations)
         self._operation_types.extend(self._delegate_operations)

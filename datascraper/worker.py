@@ -10,6 +10,7 @@ from redis import Redis
 from steepcommon.conf import APP_COLLECTIONS
 from steepcommon.enums import CollectionType, Application
 from steepcommon.lib import Steem
+from steepcommon.lib.amount import Amount
 from steepcommon.lib.instance import set_shared_steemd_instance
 from steepcommon.lib.post import Post
 from steepcommon.libbase.exceptions import PostDoesNotExist
@@ -47,15 +48,16 @@ class WorkerProcess(multiprocessing.Process):
             logger.error('Failed to insert operation: %s.', result)
 
     def _insert_curator(self, operation: Operation):
-        amount, currency = operation['amount'].split()
-        amount = float(amount)
-        print(operation['to'])
+        amount = Amount(operation['amount'])
+
+        if amount.amount < self.config.curators_payouts['minimal_sum'] or \
+            amount.asset not in self.config.curators_payouts['currencies']: return
 
         data = {
             'username': operation['from'],
             'trx_timestamp': operation['timestamp'],
-            'sum': amount,
-            'currency': currency,
+            'sum': amount.amount,
+            'currency': amount.asset,
         }
 
         result = retry(self.mongo.Curators.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(data)
@@ -163,7 +165,7 @@ class WorkerProcess(multiprocessing.Process):
             if op_type in self.config.delegate_operations:
                 self._insert_delegate_op(operation)
             if op_type in self.config.transfer_operations:
-                if operation['to'] in self.config.accounts_for_transfer:
+                if operation['to'] in self.config.curators_payouts['accounts_for_transfer']:
                     self._insert_curator(operation)
         self.redis_result_obj.lpush(self.redis_list_name, int(block_number))
 
