@@ -61,6 +61,7 @@ class Config(object):
         self._logger_conf = None
         self._max_attempts = None
         self._skip_freq = None
+        self._notification = None
 
         self._cfg = None
         self._load_conf(config_path)
@@ -105,6 +106,10 @@ class Config(object):
     @property
     def skip_freq(self):
         return self._skip_freq
+
+    @property
+    def notification(self):
+        return self._notification
 
     @property
     def redis_host(self):
@@ -173,6 +178,11 @@ class Config(object):
 
         self._max_attempts = get_or_raise(self._cfg, 'datascraper', 'max_attempts', pop=True, default=50)
         self._skip_freq = get_or_raise(self._cfg, 'datascraper', 'skip_freq', pop=True, default=5)
+        self._notification = Object(
+            url=get_or_raise(self._cfg, 'datascraper', 'notification', 'url'),
+            token=get_or_raise(self._cfg, 'datascraper', 'notification', 'token',
+                               default='f3e95ecbaf6f0a86acabcd43cda913c8afcd7e77'),
+        )
 
         self._post_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'post_operations', pop=True)
         self._delegate_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'delegate_operations', pop=True)

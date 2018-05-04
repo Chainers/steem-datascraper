@@ -1,12 +1,15 @@
+import json
 import logging
 import multiprocessing
 import pickle
 import time
 from typing import Union
 
+import requests
 from cerberus import Validator
 from pymongo.errors import DuplicateKeyError, ConnectionFailure
 from redis import Redis
+from requests import RequestException
 from steepcommon.conf import APP_COLLECTIONS
 from steepcommon.enums import CollectionType, Application
 from steepcommon.lib import Steem
@@ -153,8 +156,19 @@ class WorkerProcess(multiprocessing.Process):
         if cls_name and hasattr(datascraper.notification, cls_name):
             event = getattr(datascraper.notification, cls_name)
             data = event(operation).json()
-            # TODO: send `data` to notification endpoint
-            logger.error('NOTIFICATION: %s', data)
+            try:
+                resp = requests.post(self.config.notification.url,
+                                     data=json.dumps(data),
+                                     headers={
+                                         'Content-type': 'application/json',
+                                         'Authorization': 'Token %s' % self.config.notification.token
+                                     })
+                if 200 <= resp.status_code < 400:
+                    logger.info('Notification sent: %s', data)
+                else:
+                    logger.warning('Failed to send notification: %s. Error: %s', data, resp.json())
+            except RequestException as error:
+                logger.error('Failed to retrieve data from api: {error}'.format(error=error))
 
     def _parse_comment_update_operation(self, operation: Operation):
         identifier = operation.get_identifier()
