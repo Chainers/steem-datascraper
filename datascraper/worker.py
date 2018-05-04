@@ -152,7 +152,7 @@ class WorkerProcess(multiprocessing.Process):
 
     def _send_notification(self, operation: dict):
         op_type = operation['type']
-        cls_name = self.config.notification_events.get(op_type)
+        cls_name = self.config.notification.events.get(op_type)
         if cls_name and hasattr(datascraper.notification, cls_name):
             event = getattr(datascraper.notification, cls_name)
             data = event(operation).json()
@@ -166,7 +166,7 @@ class WorkerProcess(multiprocessing.Process):
                 if 200 <= resp.status_code < 400:
                     logger.info('Notification sent: %s', data)
                 else:
-                    logger.warning('Failed to send notification: %s. Error: %s', data, resp.json())
+                    logger.warning('Failed to send notification: %s. Error: %s', data, resp.content)
             except RequestException as error:
                 logger.error('Failed to retrieve data from api: {error}'.format(error=error))
 
@@ -193,7 +193,7 @@ class WorkerProcess(multiprocessing.Process):
                     self._insert_curator(operation)
 
             # notifications
-            if not self.reversed_mode and op_type in self.config.notification_events:
+            if not self.reversed_mode and op_type in self.config.notification.events:
                 self._send_notification(operation)
 
         self.redis_result_obj.lpush(self.redis_list_name, int(block_number))

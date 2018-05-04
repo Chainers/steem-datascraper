@@ -30,15 +30,14 @@ datascraper:
     transfer_operations:
       - transfer
 
-  notification_events:
-    # key - the name of the operation for notification
-    # value - the name of the class from `notification.py` module
-    comment: CommentEvent
-    vote: VoteEvent
-
   notification:
     url: https://steepshot.org/api/v1_1/notification
     token: f3e95ecbaf6f0a86acabcd43cda913c8afcd7e77
+    events:
+      # key - the name of the operation for notification
+      # value - the name of the class from `notification.py` module
+      comment: CommentEvent
+      vote: VoteEvent
 
   curators_payouts:
     accounts_for_transfer:

@@ -57,7 +57,6 @@ class Config(object):
         self._delegate_operations = []
         self._transfer_operations = []
         self._curators_payouts = []
-        self._notification_events = []
         self._logger_conf = None
         self._max_attempts = None
         self._skip_freq = None
@@ -90,10 +89,6 @@ class Config(object):
     @property
     def curators_payouts(self):
         return self._curators_payouts
-
-    @property
-    def notification_events(self):
-        return self._notification_events
 
     @property
     def logger_conf(self):
@@ -182,13 +177,14 @@ class Config(object):
             url=get_or_raise(self._cfg, 'datascraper', 'notification', 'url'),
             token=get_or_raise(self._cfg, 'datascraper', 'notification', 'token',
                                default='f3e95ecbaf6f0a86acabcd43cda913c8afcd7e77'),
+            events=get_or_raise(self._cfg, 'datascraper', 'notification', 'events'),
+
         )
 
         self._post_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'post_operations', pop=True)
         self._delegate_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'delegate_operations', pop=True)
         self._transfer_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'transfer_operations', pop=True)
         self._curators_payouts = get_or_raise(self._cfg, 'datascraper', 'curators_payouts', pop=True)
-        self._notification_events = get_or_raise(self._cfg, 'datascraper', 'notification_events', pop=True)
 
         self._operation_types.extend(self._post_operations)
         self._operation_types.extend(self._delegate_operations)
