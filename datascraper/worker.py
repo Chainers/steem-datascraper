@@ -18,6 +18,7 @@ from steepcommon.mongo.storage import MongoStorage
 from steepcommon.mongo.wrappers import mark_post_as_deleted
 from steepcommon.utils import has_images, retry
 
+import datascraper.notification
 from datascraper.config import Config
 from datascraper.schema import POST_SCHEMA
 from datascraper.utils import Operation, get_apps_for_operation
@@ -51,7 +52,7 @@ class WorkerProcess(multiprocessing.Process):
         amount = Amount(operation['amount'])
 
         if amount.amount < self.config.curators_payouts['minimal_sum'] or \
-            amount.asset not in self.config.curators_payouts['currencies']: return
+                amount.asset not in self.config.curators_payouts['currencies']: return
 
         data = {
             'username': operation['from'],
@@ -146,6 +147,15 @@ class WorkerProcess(multiprocessing.Process):
         except Exception as e:
             logger.exception('Failed to process post "%s". Error: %s', post_identifier, e)
 
+    def _send_notification(self, operation: dict):
+        op_type = operation['type']
+        cls_name = self.config.notification_events.get(op_type)
+        if cls_name and hasattr(datascraper.notification, cls_name):
+            event = getattr(datascraper.notification, cls_name)
+            data = event(operation).json()
+            # TODO: send `data` to notification endpoint
+            logger.error('NOTIFICATION: %s', data)
+
     def _parse_comment_update_operation(self, operation: Operation):
         identifier = operation.get_identifier()
         parent_identifier = operation.get_parent_identifier()
@@ -167,6 +177,11 @@ class WorkerProcess(multiprocessing.Process):
             if op_type in self.config.transfer_operations:
                 if operation['to'] in self.config.curators_payouts['accounts_for_transfer']:
                     self._insert_curator(operation)
+
+            # notifications
+            if not self.reversed_mode and op_type in self.config.notification_events:
+                self._send_notification(operation)
+
         self.redis_result_obj.lpush(self.redis_list_name, int(block_number))
 
     def run(self):

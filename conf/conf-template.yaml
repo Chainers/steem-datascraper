@@ -30,6 +30,12 @@ datascraper:
     transfer_operations:
       - transfer
 
+  notification_events:
+    # key - the name of the operation for notification
+    # value - the name of the class from `notification.py` module
+    comment: CommentEvent
+    vote: VoteEvent
+
   curators_payouts:
     accounts_for_transfer:
       - steepshot
