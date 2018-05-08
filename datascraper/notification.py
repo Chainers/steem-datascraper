@@ -59,4 +59,7 @@ class CommentEvent(BaseEvent):
         return self.operation['author']
 
     def get_action_object(self) -> str:
+        if self.operation['parent_author']:
+            root_post = Post('@%s/%s' % (self.operation['parent_author'], self.operation['parent_permlink']))
+            return root_post.root_identifier
         return self.operation.get_identifier()
