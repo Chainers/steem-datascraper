@@ -122,9 +122,14 @@ class WorkerProcess(multiprocessing.Process):
                         )
                         if isinstance(result, Exception):
                             logger.error('Failed to insert post: "%s". Error: %s', post_identifier, result)
-                        comments = Post.get_all_replies(post)
-                        for comment in comments:
-                            self._upsert_comment(comment['identifier'], {app}, comment, update_root=False)
+
+                        comments = retry(Post.get_all_replies, 5, Exception)(post)
+                        if isinstance(comments, Exception):
+                            logger.error('Failed to get comments for post: "%s". Error: %s',
+                                         post_identifier, comments)
+                        else:
+                            for comment in comments:
+                                self._upsert_comment(comment['identifier'], {app}, comment, update_root=False)
                     else:
                         result = retry(getattr(self.mongo, collections[CollectionType.comments]).update_one, 5,
                                        (DuplicateKeyError, ConnectionFailure))(
