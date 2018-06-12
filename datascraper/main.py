@@ -24,7 +24,7 @@ def inspector(redis_objs: dict):
         for db_name, redis_obj in redis_objs.items():
             # if db_name == 'backward_db' and (not backward_process.is_alive() and redis_obj.llen(db_name) == 0):
             #     backward_process.terminate()
-            logger.info('Number of elements {number} in '
+            logger.debug('Number of elements {number} in '
                         '"{db_name}" database.'.format(number=redis_obj.llen(db_name),
                                                        db_name=db_name))
         time.sleep(30)

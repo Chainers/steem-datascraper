@@ -3,6 +3,8 @@ import os
 import yaml
 from steepcommon.conf import IS_STEEM_PARAM_NAME, IS_GOLOS_PARAM_NAME
 
+from conf.logging import LOGGING
+
 
 class empty: pass  # used in cases where None value is valid
 
@@ -161,8 +163,7 @@ class Config(object):
         self._parse_db_section()
 
     def _parse_logger_section(self):
-        logger_conf = get_or_raise(self._cfg, 'logger', pop=True)
-        self._logger_conf = logger_conf
+        self._logger_conf = LOGGING
 
     def _parse_datascraper_section(self):
         use_web_socket = get_or_raise(self._cfg, 'datascraper', 'use_websocket', pop=True, default=True)

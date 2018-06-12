@@ -169,7 +169,7 @@ class WorkerProcess(multiprocessing.Process):
                                          'Authorization': 'Token %s' % self.config.notification.token
                                      })
                 if 200 <= resp.status_code < 400:
-                    logger.info('Notification sent: %s', data)
+                    logger.debug('Notification sent: %s', data)
                 else:
                     logger.warning('Failed to send notification: %s. Error: %s', data, resp.content)
             except RequestException as error:
@@ -204,7 +204,7 @@ class WorkerProcess(multiprocessing.Process):
         self.redis_result_obj.lpush(self.redis_list_name, int(block_number))
 
     def run(self):
-        logger.info('Running {}'.format(self.name))
+        logger.debug('Running {}'.format(self.name))
         self.mongo = MongoStorage(self.config.mongo_uri)
 
         while True:
@@ -212,7 +212,7 @@ class WorkerProcess(multiprocessing.Process):
                 try:
                     self._process_block(self.redis_obj.rpop(self.redis_list_name))
                 except TypeError as error:
-                    logger.warning('Queue is empty: {error}.'
+                    logger.debug('Queue is empty: {error}.'
                                    'Current size of list {list}: '
                                    '{size}.'.format(error=error,
                                                     size=self.redis_obj.llen(self.redis_list_name),
