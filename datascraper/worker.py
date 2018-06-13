@@ -48,7 +48,7 @@ class WorkerProcess(multiprocessing.Process):
 
     def _insert_delegate_op(self, operation: Operation):
         result = retry(self.mongo.Operations.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(operation)
-        if isinstance(result, Exception):
+        if isinstance(result, ConnectionFailure):
             logger.error('Failed to insert operation: %s.', result)
 
     def _insert_curator(self, operation: Operation):
@@ -65,7 +65,7 @@ class WorkerProcess(multiprocessing.Process):
         }
 
         result = retry(self.mongo.Curators.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(data)
-        if isinstance(result, Exception):
+        if isinstance(result, ConnectionFailure):
             logger.error('Failed to insert operation: %s.', result)
 
     def _get_post_from_blockchain(self, post_identifier: str) -> Post:
@@ -156,6 +156,9 @@ class WorkerProcess(multiprocessing.Process):
             logger.exception('Failed to process post "%s". Error: %s', post_identifier, e)
 
     def _send_notification(self, operation: dict):
+        if not self.config.notification.send:
+            return
+
         op_type = operation['type']
         cls_name = self.config.notification.events.get(op_type)
         if cls_name and hasattr(datascraper.notification, cls_name):

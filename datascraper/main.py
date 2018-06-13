@@ -70,7 +70,7 @@ def datascraper():
         logger.error('Failed to load config: %s', e)
         raise
 
-    logging.config.dictConfig(get_logging_conf(cfg.log_path))
+    logging.config.dictConfig(get_logging_conf(cfg.log_path, cfg.chain_name, cfg.server_type))
     logger.info('Logger config has been successfully loaded.')
 
     steem = Steem(nodes=cfg.nodes)
