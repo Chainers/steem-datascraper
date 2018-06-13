@@ -3,8 +3,6 @@ import os
 import yaml
 from steepcommon.conf import IS_STEEM_PARAM_NAME, IS_GOLOS_PARAM_NAME
 
-from conf.logging import LOGGING
-
 
 class empty: pass  # used in cases where None value is valid
 
@@ -59,7 +57,7 @@ class Config(object):
         self._delegate_operations = []
         self._transfer_operations = []
         self._curators_payouts = []
-        self._logger_conf = None
+        self._log_path = None
         self._max_attempts = None
         self._skip_freq = None
         self._notification = None
@@ -93,8 +91,8 @@ class Config(object):
         return self._curators_payouts
 
     @property
-    def logger_conf(self):
-        return self._logger_conf
+    def log_path(self):
+        return self._log_path
 
     @property
     def max_attempts(self):
@@ -157,13 +155,13 @@ class Config(object):
             raise ConfigError('Failed to load YAML-config: %s' % e)
 
     def _parse_config(self):
-        self._parse_logger_section()
+        self._parse_log_path()
         self._parse_datascraper_section()
         self._parse_redis_section()
         self._parse_db_section()
 
-    def _parse_logger_section(self):
-        self._logger_conf = LOGGING
+    def _parse_log_path(self):
+        self._log_path = get_or_raise(self._cfg, 'log_path')
 
     def _parse_datascraper_section(self):
         use_web_socket = get_or_raise(self._cfg, 'datascraper', 'use_websocket', pop=True, default=True)

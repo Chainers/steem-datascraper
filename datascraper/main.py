@@ -13,6 +13,7 @@ from steepcommon.mongo.storage import MongoStorage, Settings
 from datascraper.config import Config, ConfigError
 from datascraper.scraper import ScrapeProcess
 from datascraper.worker import WorkerProcess
+from datascraper.logging_conf import get_logging_conf
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ def datascraper():
         logger.error('Failed to load config: %s', e)
         raise
 
-    logging.config.dictConfig(cfg.logger_conf)
+    logging.config.dictConfig(get_logging_conf(cfg.log_path))
     logger.info('Logger config has been successfully loaded.')
 
     steem = Steem(nodes=cfg.nodes)

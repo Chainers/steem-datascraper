@@ -64,4 +64,6 @@ db:
     options:  # may be absent
       ssl: "true"
       authMechanism: SCRAM-SHA-1
+
+log_path: ./log # set path for logs
 ...
