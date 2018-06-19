@@ -4,6 +4,7 @@ import multiprocessing
 import pickle
 import time
 from typing import Union
+from datetime import datetime, timedelta
 
 import requests
 from cerberus import Validator
@@ -157,6 +158,9 @@ class WorkerProcess(multiprocessing.Process):
 
     def _send_notification(self, operation: dict):
         if not self.config.notification.send:
+            return
+
+        if operation['timestamp'] - datetime.utcnow() > timedelta(minutes=30):
             return
 
         op_type = operation['type']
