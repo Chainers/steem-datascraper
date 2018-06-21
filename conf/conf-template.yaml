@@ -34,6 +34,8 @@ datascraper:
       - transfer_to_vesting
       - withdraw_vesting
 
+    update_operations:
+      - account_update
   notification:
     send: no
     url: https://steepshot.org/api/v1_1/notification
