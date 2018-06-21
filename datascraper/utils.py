@@ -28,6 +28,14 @@ class Operation(dict):
             )
         return ''
 
+    def check_account_auths(self, list_authors) -> bool:
+        if self.get('posting'):
+            posting = self.get('posting')
+            if posting.get('account_auths'):
+                list_account = posting.get('account_auths')
+                return bool([x for x in list_account if x[0] in list_authors])
+        return False
+
 
 def get_apps_for_operation(operation: Operation,
                            mongo: MongoStorage,
