@@ -17,6 +17,9 @@ class ConfigError(Exception):
     pass
 
 
+AUTHORS_OP_UPDATE = ['steemauto']
+
+
 def remove_last_key(d: dict, *keys, remove_empty=False):
     if not keys:
         return
@@ -57,7 +60,6 @@ class Config(object):
         self._delegate_operations = []
         self._transfer_operations = []
         self._curators_payouts = []
-        self._authors_op_update = []
         self._update_operations = []
         self._log_path = None
         self._max_attempts = None
@@ -95,10 +97,6 @@ class Config(object):
     @property
     def update_operations(self):
         return self._update_operations
-
-    @property
-    def authors_op_update(self):
-        return self._authors_op_update
 
     @property
     def log_path(self):
@@ -203,14 +201,14 @@ class Config(object):
         self._transfer_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'transfer_operations', pop=True)
         self._curators_payouts = get_or_raise(self._cfg, 'datascraper', 'curators_payouts', pop=True)
         self._update_operations = get_or_raise(self._cfg, 'datascraper', 'operation_types', 'update_operations', pop=True)
+
         self._operation_types.extend(self._post_operations)
         self._operation_types.extend(self._delegate_operations)
         self._operation_types.extend(self._transfer_operations)
         self._operation_types.extend(self._update_operations)
+
         self._chain_name = get_or_raise(self._cfg, 'datascraper', 'chain_name', pop=True).lower()
         self._server_type = get_or_raise(self._cfg, 'datascraper', 'server_type', pop=True).lower()
-
-        self._authors_op_update.append('steemauto')
 
         if self._chain_name not in ['steem', 'golos']:
             raise ConfigError('Failed to parse chain_type: unknown chain.')

@@ -215,7 +215,7 @@ class WorkerProcess(multiprocessing.Process):
                 if operation.get('to') in self.config.curators_payouts['accounts_for_transfer']:
                     self._insert_curator(operation)
             if op_type in self.config.update_operations:
-                if Operation(operation).check_account_auths(self.config.authors_op_update):
+                if Operation(operation).check_account_auths():
                     self._insert_update_op(operation)
             # notifications
             if not self.reversed_mode and op_type in self.config.notification.events:

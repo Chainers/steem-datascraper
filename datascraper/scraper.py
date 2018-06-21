@@ -38,7 +38,7 @@ class ScrapeProcess(multiprocessing.Process):
             if op_type in self.config.delegate_operations:
                 return True
             if op_type in self.config.update_operations:
-                return Operation(operation).check_account_auths(self.config.authors_op_update)
+                return Operation(operation).check_account_auths()
             if op_type in self.config.post_operations:
                 identifier = Operation(operation).get_identifier()
                 parent_identifier = Operation(operation).get_parent_identifier()

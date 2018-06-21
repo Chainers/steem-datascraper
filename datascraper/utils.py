@@ -7,6 +7,8 @@ from steepcommon.mongo import consts
 from steepcommon.mongo.storage import MongoStorage
 from steepcommon.utils import get_apps_from_json_metadata, retry
 
+from .config import AUTHORS_OP_UPDATE
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,12 +30,12 @@ class Operation(dict):
             )
         return ''
 
-    def check_account_auths(self, list_authors) -> bool:
+    def check_account_auths(self) -> bool:
         if self.get('posting'):
             posting = self.get('posting')
             if posting.get('account_auths'):
                 list_account = posting.get('account_auths')
-                return bool([x for x in list_account if x[0] in list_authors])
+                return bool([x for x in list_account if x[0] in AUTHORS_OP_UPDATE])
         return False
 
 
