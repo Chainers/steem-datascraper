@@ -69,6 +69,11 @@ class WorkerProcess(multiprocessing.Process):
         if isinstance(result, ConnectionFailure):
             logger.error('Failed to insert operation: %s.', result)
 
+    def _insert_operation(self, operation: Operation):
+        result = retry(self.mongo.Operations.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(operation)
+        if isinstance(result, ConnectionFailure):
+            logger.error('Failed to insert operation: %s.', result)
+
     def _get_post_from_blockchain(self, post_identifier: str) -> Post:
         p = None
         for i in range(5):
@@ -201,7 +206,8 @@ class WorkerProcess(multiprocessing.Process):
             if op_type in self.config.delegate_operations:
                 self._insert_delegate_op(operation)
             if op_type in self.config.transfer_operations:
-                if operation['to'] in self.config.curators_payouts['accounts_for_transfer']:
+                self._insert_operation(operation)
+                if operation.get('to') in self.config.curators_payouts['accounts_for_transfer']:
                     self._insert_curator(operation)
 
             # notifications
