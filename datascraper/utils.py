@@ -7,7 +7,7 @@ from steepcommon.mongo import consts
 from steepcommon.mongo.storage import MongoStorage
 from steepcommon.utils import get_apps_from_json_metadata, retry
 
-from .config import AUTHORS_OP_UPDATE
+from datascraper.config import AUTHORS_OP_UPDATE
 
 logger = logging.getLogger(__name__)
 
