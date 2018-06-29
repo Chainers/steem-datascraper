@@ -47,11 +47,6 @@ class WorkerProcess(multiprocessing.Process):
         self.mongo = None
         set_shared_steemd_instance(self.steem)
 
-    def _insert_delegate_op(self, operation: Operation):
-        result = retry(self.mongo.Operations.insert_one, 5, (DuplicateKeyError, ConnectionFailure))(operation)
-        if isinstance(result, ConnectionFailure):
-            logger.error('Failed to insert operation: %s.', result)
-
     def _insert_curator(self, operation: Operation):
         amount = Amount(operation['amount'])
 
@@ -204,7 +199,7 @@ class WorkerProcess(multiprocessing.Process):
                 if not (self.reversed_mode and op_type in {'author_reward', 'vote'}):
                     self._parse_comment_update_operation(Operation(operation))
             if op_type in self.config.delegate_operations:
-                self._insert_delegate_op(operation)
+                self._insert_operation(operation)
             if op_type in self.config.transfer_operations:
                 self._insert_operation(operation)
                 if operation.get('to') in self.config.curators_payouts['accounts_for_transfer']:
