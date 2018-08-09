@@ -45,6 +45,7 @@ datascraper:
       # value - the name of the class from `notification.py` module
       comment: CommentEvent
       vote: VoteEvent
+      transfer: TransferEvent
 
   curators_payouts:
     accounts_for_transfer:

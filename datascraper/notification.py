@@ -63,3 +63,25 @@ class CommentEvent(BaseEvent):
             root_post = Post('@%s/%s' % (self.operation['parent_author'], self.operation['parent_permlink']))
             return root_post.root_identifier
         return self.operation.get_identifier()
+
+
+class TransferEvent(BaseEvent):
+    def get_event_type(self) -> str:
+        return 'transfer'
+
+    def get_initiator(self) -> str:
+        return self.operation['from']
+
+    def get_action_object(self) -> str:
+        return self.operation['to']
+
+    def json(self) -> dict:
+        d = super(TransferEvent, self).json()
+        d.update({
+            'transfer_data': {
+                'memo': self.operation['memo'],
+                'amount': self.operation['amount']
+            }
+        })
+
+        return d
